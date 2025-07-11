@@ -1,6 +1,9 @@
-import { useEffect, useState } from "react";
-
+import { useEffect, useMemo, useState } from "react";
+import "../users/style.scss"
 const ProductPage = ({ setCount }) => {
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("");
+  const [sortOrder, setSortOrder] = useState("asc");
   const [products, setProducts] = useState(() => {
     const savedProducts = localStorage.getItem("products");
     return savedProducts
@@ -129,8 +132,47 @@ const ProductPage = ({ setCount }) => {
     setEditId(p.id);
   };
 
+  const filteredProducts = useMemo(() => {
+    let result = products.filter(
+      (p) =>
+        p.title?.toLowerCase().includes(search.toLowerCase()) ||
+        p.desc?.toLowerCase().includes(search.toLowerCase())
+    );
+
+    if (sortBy === "price") {
+      result.sort((a, b) =>
+        sortOrder === "asc" ? a.price - b.price : b.price - a.price
+      );
+    }
+
+    return result;
+  }, [products, search, sortBy, sortOrder]);
+
   return (
     <div className="continer">
+      <input
+        type="text"
+        placeholder="Search by"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
+      <div className="sortWrapper">
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="">Sorting</option>
+          <option value="price">Price</option>
+        </select>
+
+        <button
+          onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+        >
+          <i
+            className={`bx ${
+              sortOrder === "asc" ? "bx-sort-up" : "bx-sort-down"
+            }`}
+          ></i>
+        </button>
+      </div>
       <div className="formEl">
         <h2>{editId ? "Edit Product" : "Add Product"}</h2>
 
@@ -168,7 +210,7 @@ const ProductPage = ({ setCount }) => {
 
       <h3>Product List:</h3>
       <div className="box1">
-        {products.map((p) => (
+        {filteredProducts.map((p) => (
           <div key={p.id} className="box">
             <p>
               <b>Category:</b> {p.category}

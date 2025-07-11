@@ -1,6 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+import "../users/style.scss";
 
 const TasksPage = ({ setCount }) => {
+  const [search, setSearch] = useState("");
+  const [sortOrder, setSortOrder] = useState("asc");
+
   const [tasks, setTasks] = useState(() => {
     const savedTasks = localStorage.getItem("tasks");
     return savedTasks
@@ -117,8 +122,43 @@ const TasksPage = ({ setCount }) => {
     setEditId(task.id);
   };
 
+  const filteredTasks = useMemo(() => {
+    let result = tasks.filter(
+      (t) =>
+        t.title.toLowerCase().includes(search.toLowerCase()) ||
+        t.desc.toLowerCase().includes(search.toLowerCase())
+    );
+
+    result.sort((a, b) => {
+      return sortOrder === "asc"
+        ? new Date(a.time) - new Date(b.time)
+        : new Date(b.time) - new Date(a.time);
+    });
+
+    return result;
+  }, [tasks, search, sortOrder]);
+
   return (
     <div className="continer">
+      <input
+        type="text"
+        placeholder="Search by title or description"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+      <div className="sortWrapper">
+        <button
+          onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+        >
+          Sort by Time: {sortOrder === "asc" ? "↑ Earlier" : "↓ Later"}
+          <i
+            className={`bx ${
+              sortOrder === "asc" ? "bx-sort-up" : "bx-sort-down"
+            }`}
+          ></i>
+        </button>
+      </div>
+
       <div className="formEl">
         <h2>{editId ? "Edit Task" : "Add Task"}</h2>
 
@@ -147,7 +187,7 @@ const TasksPage = ({ setCount }) => {
 
       <h3>Task List:</h3>
       <div className="box1">
-        {tasks.map((task) => (
+        {filteredTasks.map((task) => (
           <div key={task.id} className="box">
             <p>
               <b>Title:</b> {task.title}

@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./style.scss";
 
 const UserPage = ({ setCount }) => {
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("");
+  const [sortOrder, setSortOrder] = useState("asc");
   const [users, setUsers] = useState(() => {
     const saved = localStorage.getItem("users");
     return saved
@@ -132,8 +135,54 @@ const UserPage = ({ setCount }) => {
     setEditId(user.id);
   };
 
+  const filteredUsers = useMemo(() => {
+    let result = users.filter(
+      (u) =>
+        u.firstName?.toLowerCase().includes(search.toLowerCase()) ||
+        u.lastName?.toLowerCase().includes(search.toLowerCase())
+    );
+
+    if (sortBy === "firstName") {
+      result.sort((a, b) =>
+        sortOrder === "asc"
+          ? a.firstName.localeCompare(b.firstName)
+          : b.firstName.localeCompare(a.firstName)
+      );
+    } else if (sortBy === "age") {
+      result.sort((a, b) =>
+        sortOrder === "asc" ? a.age - b.age : b.age - a.age
+      );
+    }
+
+    return result;
+  }, [users, search, sortBy, sortOrder]);
+
   return (
     <div className="continer">
+      <input
+        type="text"
+        placeholder="Search by name"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
+      <div className="sortWrapper">
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="">Sorting</option>
+          <option value="firstName">Name (A-Z)</option>
+          <option value="age">Age</option>
+        </select>
+
+        <button
+          onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+        >
+          <i
+            className={`bx ${
+              sortOrder === "asc" ? "bx-sort-up" : "bx-sort-down"
+            }`}
+          ></i>
+        </button>
+      </div>
       <div className="formEl">
         <h2>Add User</h2>
         <input
@@ -169,7 +218,7 @@ const UserPage = ({ setCount }) => {
 
       <h3>User List:</h3>
       <div className="box1">
-        {users.map((user) => (
+        {filteredUsers.map((user) => (
           <div key={user.id} className="box">
             <p>
               Name: {user.firstName} {user.lastName}
